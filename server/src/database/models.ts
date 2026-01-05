@@ -6,6 +6,7 @@ export interface User {
   providerUserId: string;
   email: string;
   displayName: string;
+  username?: string; // Custom username, defaults to displayName if not set
   avatarUrl?: string;
   createdAt: string;
   lastLoginAt: string;

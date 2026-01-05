@@ -157,7 +157,8 @@ export async function getUserScoreboards(userId: string): Promise<Scoreboard[]> 
 export async function getScoreboardScores(
   scoreboardId: string,
   gameType: string,
-  memberIds: string[] | null // null means all users (global)
+  memberIds: string[] | null, // null means all users (global)
+  gameDate?: string // Optional date filter (YYYY-MM-DD format)
 ): Promise<Score[]> {
   const container = await getScoresContainer();
   
@@ -166,19 +167,32 @@ export async function getScoreboardScores(
   
   if (memberIds === null) {
     // Global scoreboard - get all scores for this game type
-    // Note: No ORDER BY in query - Cosmos DB requires composite index for multi-field ORDER BY
-    // We'll sort in memory using compareScores() which handles gameDate and sortScore
-    query = 'SELECT * FROM c WHERE c.gameType = @gameType';
-    parameters = [{ name: '@gameType', value: gameType }];
+    if (gameDate) {
+      query = 'SELECT * FROM c WHERE c.gameType = @gameType AND c.gameDate = @gameDate';
+      parameters = [
+        { name: '@gameType', value: gameType },
+        { name: '@gameDate', value: gameDate },
+      ];
+    } else {
+      query = 'SELECT * FROM c WHERE c.gameType = @gameType';
+      parameters = [{ name: '@gameType', value: gameType }];
+    }
   } else {
     // Private scoreboard - get scores for members only
-    // Note: No ORDER BY in query - Cosmos DB requires composite index for multi-field ORDER BY
-    // We'll sort in memory using compareScores() which handles gameDate and sortScore
-    query = 'SELECT * FROM c WHERE c.gameType = @gameType AND ARRAY_CONTAINS(@memberIds, c.userId)';
-    parameters = [
-      { name: '@gameType', value: gameType },
-      { name: '@memberIds', value: memberIds },
-    ];
+    if (gameDate) {
+      query = 'SELECT * FROM c WHERE c.gameType = @gameType AND c.gameDate = @gameDate AND ARRAY_CONTAINS(@memberIds, c.userId)';
+      parameters = [
+        { name: '@gameType', value: gameType },
+        { name: '@gameDate', value: gameDate },
+        { name: '@memberIds', value: memberIds },
+      ];
+    } else {
+      query = 'SELECT * FROM c WHERE c.gameType = @gameType AND ARRAY_CONTAINS(@memberIds, c.userId)';
+      parameters = [
+        { name: '@gameType', value: gameType },
+        { name: '@memberIds', value: memberIds },
+      ];
+    }
   }
   
   const { resources } = await container.items.query({ query, parameters }).fetchAll();

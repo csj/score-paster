@@ -25,10 +25,22 @@ export let database: Database;
 
 export async function initializeDatabase() {
   try {
-    const { database: db } = await client.databases.createIfNotExists({ id: databaseName });
-    database = db;
-    console.log('Cosmos DB database initialized');
-    return db;
+    // Check if database exists first
+    try {
+      const { database: existingDb } = await client.database(databaseName).read();
+      database = existingDb;
+      console.log('Cosmos DB database already exists, using existing database');
+      return existingDb;
+    } catch (error: any) {
+      // Database doesn't exist (404), create it
+      if (error.code === 404) {
+        const { database: db } = await client.databases.create({ id: databaseName });
+        database = db;
+        console.log('Cosmos DB database created');
+        return db;
+      }
+      throw error;
+    }
   } catch (error) {
     console.error('Failed to initialize Cosmos DB database:', error);
     throw error;
@@ -40,12 +52,21 @@ export async function getContainer(containerName: string): Promise<Container> {
     await initializeDatabase();
   }
   
-  const { container } = await database.containers.createIfNotExists({
-    id: containerName,
-    partitionKey: { paths: ['/id'] },
-  });
-  
-  return container;
+  // Check if container exists first
+  try {
+    const { container } = await database.container(containerName).read();
+    return container;
+  } catch (error: any) {
+    // Container doesn't exist (404), create it
+    if (error.code === 404) {
+      const { container } = await database.containers.create({
+        id: containerName,
+        partitionKey: { paths: ['/id'] },
+      });
+      return container;
+    }
+    throw error;
+  }
 }
 
 // Container-specific getters with proper partition keys
@@ -54,12 +75,21 @@ export async function getUsersContainer(): Promise<Container> {
     await initializeDatabase();
   }
   
-  const { container } = await database.containers.createIfNotExists({
-    id: 'Users',
-    partitionKey: { paths: ['/id'] },
-  });
-  
-  return container;
+  // Check if container exists first
+  try {
+    const { container } = await database.container('Users').read();
+    return container;
+  } catch (error: any) {
+    // Container doesn't exist (404), create it
+    if (error.code === 404) {
+      const { container } = await database.containers.create({
+        id: 'Users',
+        partitionKey: { paths: ['/id'] },
+      });
+      return container;
+    }
+    throw error;
+  }
 }
 
 export async function getScoresContainer(): Promise<Container> {
@@ -67,12 +97,21 @@ export async function getScoresContainer(): Promise<Container> {
     await initializeDatabase();
   }
   
-  const { container } = await database.containers.createIfNotExists({
-    id: 'Scores',
-    partitionKey: { paths: ['/userId'] },
-  });
-  
-  return container;
+  // Check if container exists first
+  try {
+    const { container } = await database.container('Scores').read();
+    return container;
+  } catch (error: any) {
+    // Container doesn't exist (404), create it
+    if (error.code === 404) {
+      const { container } = await database.containers.create({
+        id: 'Scores',
+        partitionKey: { paths: ['/userId'] },
+      });
+      return container;
+    }
+    throw error;
+  }
 }
 
 export async function getScoreboardsContainer(): Promise<Container> {
@@ -80,12 +119,21 @@ export async function getScoreboardsContainer(): Promise<Container> {
     await initializeDatabase();
   }
   
-  const { container } = await database.containers.createIfNotExists({
-    id: 'Scoreboards',
-    partitionKey: { paths: ['/id'] }, // Changed from gameType to id (slug-based)
-  });
-  
-  return container;
+  // Check if container exists first
+  try {
+    const { container } = await database.container('Scoreboards').read();
+    return container;
+  } catch (error: any) {
+    // Container doesn't exist (404), create it
+    if (error.code === 404) {
+      const { container } = await database.containers.create({
+        id: 'Scoreboards',
+        partitionKey: { paths: ['/id'] }, // Changed from gameType to id (slug-based)
+      });
+      return container;
+    }
+    throw error;
+  }
 }
 
 export async function getScoreboardMembersContainer(): Promise<Container> {
@@ -93,10 +141,19 @@ export async function getScoreboardMembersContainer(): Promise<Container> {
     await initializeDatabase();
   }
   
-  const { container } = await database.containers.createIfNotExists({
-    id: 'ScoreboardMembers',
-    partitionKey: { paths: ['/userId'] },
-  });
-  
-  return container;
+  // Check if container exists first
+  try {
+    const { container } = await database.container('ScoreboardMembers').read();
+    return container;
+  } catch (error: any) {
+    // Container doesn't exist (404), create it
+    if (error.code === 404) {
+      const { container } = await database.containers.create({
+        id: 'ScoreboardMembers',
+        partitionKey: { paths: ['/userId'] },
+      });
+      return container;
+    }
+    throw error;
+  }
 }

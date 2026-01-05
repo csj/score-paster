@@ -129,4 +129,32 @@ router.get('/me', authenticate, (req: Request, res: Response) => {
   res.json(req.user);
 });
 
+// Update username
+router.patch('/me/username', authenticate, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    const { username } = req.body;
+    
+    if (!username || typeof username !== 'string') {
+      return res.status(400).json({ error: 'username is required' });
+    }
+    
+    // Validate username (alphanumeric, spaces, hyphens, underscores, 1-30 chars)
+    if (!/^[a-zA-Z0-9 _-]{1,30}$/.test(username.trim())) {
+      return res.status(400).json({ error: 'Username must be 1-30 characters and contain only letters, numbers, spaces, hyphens, and underscores' });
+    }
+    
+    const { updateUsername } = await import('../database/users.js');
+    const updatedUser = await updateUsername(req.user.id, username.trim());
+    
+    res.json(updatedUser);
+  } catch (error) {
+    logError(error as Error, { userId: req.user?.id, endpoint: '/api/auth/me/username' });
+    res.status(500).json({ error: 'Failed to update username' });
+  }
+});
+
 export default router;

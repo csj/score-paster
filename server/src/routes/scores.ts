@@ -36,8 +36,24 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'scoreData.sortScore is required' });
     }
     
-    // Store score in Cosmos DB
+    // Check if user already has a score for this game and date (first attempts only!)
     const container = await getScoresContainer();
+    const { resources: existingScores } = await container.items
+      .query({
+        query: 'SELECT * FROM c WHERE c.userId = @userId AND c.gameType = @gameType AND c.gameDate = @gameDate',
+        parameters: [
+          { name: '@userId', value: req.user.id },
+          { name: '@gameType', value: gameType },
+          { name: '@gameDate', value: gameDate },
+        ],
+      })
+      .fetchAll();
+    
+    if (existingScores.length > 0) {
+      return res.status(409).json({ error: 'first attempts only!' });
+    }
+    
+    // Store score in Cosmos DB
     const now = new Date().toISOString();
     
     const score: Score = {

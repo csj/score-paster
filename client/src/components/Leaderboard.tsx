@@ -10,6 +10,13 @@ interface Score {
   gameDate: string;
   scoreData: any;
   createdAt: string;
+  rawPaste?: string;
+  user?: {
+    id: string;
+    username?: string;
+    displayName: string;
+    avatarUrl?: string;
+  } | null;
 }
 
 interface Scoreboard {
@@ -33,6 +40,10 @@ export default function Leaderboard({ boardSlug, gameType }: LeaderboardProps) {
   const [scores, setScores] = useState<Score[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Default to today's date
+  const today = new Date().toISOString().split('T')[0];
+  const [selectedDate, setSelectedDate] = useState(today);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -40,9 +51,9 @@ export default function Leaderboard({ boardSlug, gameType }: LeaderboardProps) {
       setError(null);
       
       try {
-        const url = `/api/scoreboards/${boardSlug}/scores/${gameType}`;
+        const url = `/api/scoreboards/${boardSlug}/scores/${gameType}?date=${selectedDate}`;
         
-        const data = await apiRequest<{ scoreboard: Scoreboard; gameType: string; scores: Score[] }>(url);
+        const data = await apiRequest<{ scoreboard: Scoreboard; gameType: string; gameDate: string; scores: Score[] }>(url);
         setScoreboard(data.scoreboard);
         setScores(data.scores);
       } catch (err: any) {
@@ -53,7 +64,7 @@ export default function Leaderboard({ boardSlug, gameType }: LeaderboardProps) {
     };
 
     fetchLeaderboard();
-  }, [boardSlug, gameType]);
+  }, [boardSlug, gameType, selectedDate]);
 
   if (loading) {
     return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
@@ -71,9 +82,49 @@ export default function Leaderboard({ boardSlug, gameType }: LeaderboardProps) {
     return <div style={{ padding: '2rem' }}>Scoreboard not found</div>;
   }
 
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (dateStr === today.toISOString().split('T')[0]) {
+      return 'Today';
+    } else if (dateStr === yesterday.toISOString().split('T')[0]) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+  };
+
   return (
     <div style={{ padding: '1rem', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>{scoreboard.name} - {gameType}</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <h1 style={{ margin: 0 }}>{scoreboard.name} - {gameType}</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label htmlFor="date-select" style={{ fontSize: '0.875rem', color: '#666' }}>
+            Date:
+          </label>
+          <input
+            id="date-select"
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            max={today} // Can't select future dates
+            style={{
+              padding: '0.5rem',
+              fontSize: '0.875rem',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+            }}
+          />
+        </div>
+      </div>
+      
+      <div style={{ marginBottom: '1rem', fontSize: '0.875rem', color: '#666' }}>
+        {formatDate(selectedDate)}
+      </div>
       
       {!scoreboard.isGlobal && scoreboard.inviteCode && (
         <div style={{
@@ -90,7 +141,7 @@ export default function Leaderboard({ boardSlug, gameType }: LeaderboardProps) {
       
       {scores.length === 0 ? (
         <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
-          No scores yet for {gameType}. Be the first to submit!
+          No scores for {gameType} on {formatDate(selectedDate).toLowerCase()}.
         </div>
       ) : (
         <div style={{ marginTop: '2rem' }}>
@@ -99,6 +150,7 @@ export default function Leaderboard({ boardSlug, gameType }: LeaderboardProps) {
               key={score.id}
               score={score}
               rank={index + 1}
+              user={score.user || undefined}
             />
           ))}
         </div>

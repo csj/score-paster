@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { tryParseScore } from '../utils/parsers';
 import { apiRequest } from '../services/api';
 
 export default function PasteInput() {
+  const navigate = useNavigate();
   const [rawPaste, setRawPaste] = useState('');
   const [parseResult, setParseResult] = useState<{ gameType: string; scoreData: any } | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -50,12 +52,15 @@ export default function PasteInput() {
         }),
       });
       
+      // Store gameType before clearing state
+      const gameType = parseResult.gameType;
+      
       setSuccess(true);
       setRawPaste('');
       setParseResult(null);
       
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(false), 3000);
+      // Navigate to global leaderboard for this game type
+      navigate(`/boards/global/scores/${gameType}`);
     } catch (err: any) {
       setError(err.message || 'Failed to submit score');
     } finally {

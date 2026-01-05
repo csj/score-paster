@@ -11,6 +11,7 @@ declare global {
         id: string;
         email: string;
         displayName: string;
+        username?: string;
         avatarUrl?: string;
         provider: 'google' | 'microsoft';
         roles?: string[];
@@ -54,6 +55,7 @@ export async function authenticate(
       id: user.id,
       email: user.email,
       displayName: user.displayName,
+      username: user.username || user.displayName,
       avatarUrl: user.avatarUrl,
       provider: user.provider,
       roles: claims.roles,

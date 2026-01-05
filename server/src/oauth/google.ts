@@ -73,6 +73,7 @@ export async function handleGoogleCallback(code: string): Promise<{ token: strin
         id: user.id,
         email: user.email,
         displayName: user.displayName,
+        username: user.username || user.displayName,
         avatarUrl: user.avatarUrl,
         provider: 'google',
       },

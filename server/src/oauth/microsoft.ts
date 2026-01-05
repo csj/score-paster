@@ -87,6 +87,7 @@ export async function handleMicrosoftCallback(code: string): Promise<{ token: st
         id: user.id,
         email: user.email,
         displayName: user.displayName,
+        username: user.username || user.displayName,
         avatarUrl: user.avatarUrl,
         provider: 'microsoft',
       },

@@ -4,6 +4,7 @@ interface User {
   id: string;
   email: string;
   displayName: string;
+  username?: string;
   avatarUrl?: string;
   provider: 'google' | 'microsoft';
 }
@@ -13,6 +14,7 @@ interface AuthContextType {
   loading: boolean;
   login: () => void;
   logout: () => void;
+  setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -100,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );

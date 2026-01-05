@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import LoginButtons from '../components/LoginButtons';
+import UsernameEditor from '../components/UsernameEditor';
 import { useAuth } from '../services/auth';
 
 export default function Home() {
@@ -22,9 +23,12 @@ export default function Home() {
   }
 
   return (
-    <div style={{ padding: '2rem', textAlign: 'center' }}>
-      <h1>Welcome, {user.displayName}!</h1>
-      <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '300px', margin: '2rem auto' }}>
+    <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '2rem' }}>
+        <UsernameEditor />
+      </div>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '300px', margin: '0 auto' }}>
         <Link
           to="/paste"
           style={{

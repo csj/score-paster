@@ -44,10 +44,12 @@ az webapp create \
   --name scorepaster-app \
   --resource-group scorepaster-rg \
   --plan scorepaster-plan \
-  --runtime "NODE:18-lts"
+  --runtime "NODE:22-lts"
 ```
 
 ## Step 2: Configure Environment Variables
+
+**Important:** These environment variables are set in Azure App Service and loaded at runtime by the server. The Vite-built client doesn't need any environment variables since it uses relative API paths.
 
 Get your Cosmos DB connection details:
 ```bash
@@ -63,7 +65,7 @@ az monitor app-insights component show \
   --query connectionString
 ```
 
-Set environment variables in App Service:
+Set environment variables in App Service (these are loaded at runtime):
 ```bash
 az webapp config appsettings set \
   --name scorepaster-app \
@@ -81,6 +83,11 @@ az webapp config appsettings set \
     MICROSOFT_REDIRECT_URI="https://scorepaster-app.azurewebsites.net/api/auth/microsoft/callback" \
     PORT=8080
 ```
+
+**Note:** These variables are server-side only. The client build doesn't need any environment variables because:
+- All API calls use relative paths (`/api/...`)
+- No client-side secrets are needed
+- The Vite build produces static files that work with any backend URL
 
 ## Step 3: Configure Startup Command
 
@@ -110,32 +117,20 @@ git push azure main
 3. Select your App Service
 
 ### Option C: Using GitHub Actions
-Create `.github/workflows/deploy.yml`:
-```yaml
-name: Deploy to Azure
 
-on:
-  push:
-    branches: [main]
+1. **Set up GitHub Actions in Azure Portal:**
+   - Go to your App Service → Deployment Center
+   - Select "GitHub" as source
+   - Authorize and select your repository
+   - Azure will create the workflow file automatically
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Build
-        run: |
-          npm install
-          npm run build
-      - name: Deploy
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: scorepaster-app
-          package: ./server
-```
+2. **Modify the generated workflow** to:
+   - Build both client and server: `npm run build`
+   - Deploy the `server` directory (which contains the built client in `server/client/dist`)
+
+3. **Set environment variables in Azure App Service** (see Step 2 below) - these are loaded at runtime, not build time.
+
+**Note:** Since we're using Vite, the client is built as static files. No client-side environment variables are needed because all API calls use relative paths. Server-side environment variables are set in Azure App Service and loaded at runtime.
 
 ## Step 5: Update OAuth Redirect URIs
 

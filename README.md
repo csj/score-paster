@@ -38,7 +38,7 @@ scorepaster/
 
 ### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 20+ and npm (Node.js 22 LTS recommended)
 - Azure Cosmos DB Emulator (for local development) OR Azure Cosmos DB account
 - OAuth app registrations:
   - Google OAuth 2.0 Client ID

@@ -12,13 +12,16 @@ export function compareScores(a: Score, b: Score, currentUserId?: string): numbe
     return b.gameDate.localeCompare(a.gameDate);
   }
   
-  // Then sort by sortScore (ascending - negative values for "lower is better" come first)
+  // Sort by sortScore descending (higher is always better)
+  // For "lower is better" games, we use negative values (e.g., -5 for 5 guesses)
+  // For "higher is better" games, we use positive values (e.g., 194 for 194 points)
+  // In both cases, higher sortScore is better, so we sort descending
   const aSortScore = (a.scoreData as any).sortScore ?? 0;
   const bSortScore = (b.scoreData as any).sortScore ?? 0;
   
-  const scoreDiff = aSortScore - bSortScore;
+  const scoreDiff = bSortScore - aSortScore; // Descending: higher scores first
   
-  // If scores are equal and we have a current user, prioritize their score
+  // If sortScores are tied, prioritize the current user's score
   if (scoreDiff === 0 && currentUserId) {
     if (a.userId === currentUserId && b.userId !== currentUserId) {
       return -1; // Current user's score comes first

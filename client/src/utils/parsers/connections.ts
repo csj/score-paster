@@ -39,6 +39,13 @@ export function parseConnections(rawText: string): ScoreData | null {
       return null;
     }
     
+    // Calculate date from puzzle number
+    // Connections #1 was on June 12, 2023
+    const connectionsOriginDate = new Date('2023-06-12');
+    const gameDateObj = new Date(connectionsOriginDate);
+    gameDateObj.setDate(connectionsOriginDate.getDate() + (puzzleNumber - 1));
+    const gameDate = gameDateObj.toISOString().split('T')[0];
+    
     // Try to extract mistakes from text first
     let mistakes = 0;
     const mistakesMatch = rawText.match(/(\d+)\s*mistakes?/i);
@@ -87,20 +94,6 @@ export function parseConnections(rawText: string): ScoreData | null {
         mistakes = Math.max(0, 4 - perfectRows);
       }
       // If no grid found, mistakes stays 0 (will show as "Perfect!" but user can correct)
-    }
-    
-    let gameDate = new Date().toISOString().split('T')[0];
-    
-    const dateMatch = rawText.match(/(\d{4}[-/]\d{1,2}[-/]\d{1,2})|(\d{1,2}[-/]\d{1,2}[-/]\d{4})/);
-    if (dateMatch) {
-      try {
-        const parsedDate = new Date(dateMatch[0]);
-        if (!isNaN(parsedDate.getTime())) {
-          gameDate = parsedDate.toISOString().split('T')[0];
-        }
-      } catch {
-        // Use default date
-      }
     }
     
     const displayScore = mistakes === 0 ? 'Perfect!' : `${mistakes} mistake${mistakes !== 1 ? 's' : ''}`;

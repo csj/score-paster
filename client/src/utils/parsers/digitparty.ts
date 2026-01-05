@@ -40,21 +40,13 @@ export function parseDigitParty(rawText: string): ScoreData | null {
       return null;
     }
     
-    // Use today's date (can't convert day number to date without knowing start date)
-    let gameDate = new Date().toISOString().split('T')[0];
-    
-    // Try to extract date from text if present
-    const dateMatch = rawText.match(/(\d{4}[-/]\d{1,2}[-/]\d{1,2})|(\d{1,2}[-/]\d{1,2}[-/]\d{4})/);
-    if (dateMatch) {
-      try {
-        const parsedDate = new Date(dateMatch[0]);
-        if (!isNaN(parsedDate.getTime())) {
-          gameDate = parsedDate.toISOString().split('T')[0];
-        }
-      } catch {
-        // Use default date
-      }
-    }
+    // Calculate date from day number
+    // Digit Party day 1 was on April 3, 2023
+    // (Calculated: day 1008 on 2026-01-05 means day 1 = 2023-04-03)
+    const digitPartyOriginDate = new Date('2023-04-03');
+    const gameDateObj = new Date(digitPartyOriginDate);
+    gameDateObj.setDate(digitPartyOriginDate.getDate() + (day - 1));
+    const gameDate = gameDateObj.toISOString().split('T')[0];
     
     return {
       gameType: 'digitparty',

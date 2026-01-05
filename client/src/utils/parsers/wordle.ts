@@ -36,19 +36,12 @@ export function parseWordle(rawText: string): ScoreData | null {
       return null;
     }
     
-    let gameDate = new Date().toISOString().split('T')[0];
-    
-    const dateMatch = rawText.match(/(\d{4}[-/]\d{1,2}[-/]\d{1,2})|(\d{1,2}[-/]\d{1,2}[-/]\d{4})/);
-    if (dateMatch) {
-      try {
-        const parsedDate = new Date(dateMatch[0]);
-        if (!isNaN(parsedDate.getTime())) {
-          gameDate = parsedDate.toISOString().split('T')[0];
-        }
-      } catch {
-        // Use default date
-      }
-    }
+    // Calculate date from game number
+    // Wordle #1 was on June 19, 2021
+    const wordleOriginDate = new Date('2021-06-19');
+    const gameDateObj = new Date(wordleOriginDate);
+    gameDateObj.setDate(wordleOriginDate.getDate() + (gameNumber - 1));
+    const gameDate = gameDateObj.toISOString().split('T')[0];
     
     return {
       gameType: 'wordle',

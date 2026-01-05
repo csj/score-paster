@@ -47,10 +47,6 @@ export async function verifyToken(token: string): Promise<TokenClaims> {
     return verifyGoogleToken(token);
   } else if (issuer.includes('login.microsoftonline.com')) {
     return verifyMicrosoftToken(token);
-  } else if (issuer.includes('facebook.com') || payload.provider === 'facebook') {
-    // Facebook tokens are simple base64 encoded JSON (for now)
-    // In production, you'd want to verify with Facebook's token validation endpoint
-    return verifyFacebookToken(token);
   } else {
     throw new Error(`Unsupported token issuer: ${issuer}`);
   }
@@ -145,39 +141,16 @@ function extractTenantIdFromIssuer(iss: string): string {
   return match ? match[1] : 'common';
 }
 
-async function verifyFacebookToken(token: string): Promise<TokenClaims> {
-  try {
-    // Facebook token is base64 encoded JSON (simple implementation)
-    // In production, verify with Facebook's token validation endpoint
-    const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-    
-    return {
-      sub: decoded.sub,
-      email: decoded.email,
-      name: decoded.name,
-      iss: 'facebook',
-      exp: Date.now() / 1000 + 3600, // 1 hour from now
-      iat: Date.now() / 1000,
-      provider: 'facebook',
-    };
-  } catch (error) {
-    logError(error as Error, { provider: 'facebook' });
-    throw new Error('Failed to verify Facebook token');
-  }
-}
-
 export function getCompositeUserId(claims: TokenClaims): string {
   const provider = getProviderFromIssuer(claims.iss);
   return `${provider}:${claims.sub}`;
 }
 
-function getProviderFromIssuer(iss: string): 'google' | 'facebook' | 'microsoft' {
+function getProviderFromIssuer(iss: string): 'google' | 'microsoft' {
   if (iss.includes('accounts.google.com')) {
     return 'google';
   } else if (iss.includes('login.microsoftonline.com')) {
     return 'microsoft';
-  } else if (iss.includes('facebook.com') || iss === 'facebook') {
-    return 'facebook';
   }
   throw new Error(`Unknown issuer: ${iss}`);
 }

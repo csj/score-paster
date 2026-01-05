@@ -3,10 +3,6 @@ export default function LoginButtons() {
     window.location.href = '/api/auth/google';
   };
 
-  const handleFacebookLogin = () => {
-    window.location.href = '/api/auth/facebook';
-  };
-
   const handleMicrosoftLogin = () => {
     window.location.href = '/api/auth/microsoft';
   };
@@ -26,20 +22,6 @@ export default function LoginButtons() {
         }}
       >
         Sign in with Google
-      </button>
-      <button
-        onClick={handleFacebookLogin}
-        style={{
-          padding: '1rem',
-          fontSize: '1rem',
-          backgroundColor: '#1877f2',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-        }}
-      >
-        Sign in with Facebook
       </button>
       <button
         onClick={handleMicrosoftLogin}

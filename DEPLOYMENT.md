@@ -75,9 +75,6 @@ az webapp config appsettings set \
     GOOGLE_CLIENT_ID="your-google-client-id" \
     GOOGLE_CLIENT_SECRET="your-google-client-secret" \
     GOOGLE_REDIRECT_URI="https://scorepaster-app.azurewebsites.net/api/auth/google/callback" \
-    FACEBOOK_APP_ID="your-facebook-app-id" \
-    FACEBOOK_APP_SECRET="your-facebook-app-secret" \
-    FACEBOOK_REDIRECT_URI="https://scorepaster-app.azurewebsites.net/api/auth/facebook/callback" \
     MICROSOFT_CLIENT_ID="your-microsoft-client-id" \
     MICROSOFT_CLIENT_SECRET="your-microsoft-client-secret" \
     MICROSOFT_TENANT_ID="your-tenant-id" \
@@ -144,7 +141,6 @@ jobs:
 
 Update redirect URIs in each OAuth provider console:
 - Google Cloud Console → APIs & Services → Credentials
-- Facebook Developers → App Settings → Basic
 - Azure Portal → Entra ID → App registrations → Your app → Authentication
 
 Set redirect URIs to:

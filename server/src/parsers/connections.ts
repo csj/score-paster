@@ -1,4 +1,4 @@
-import { ScoreData } from './wordle.js';
+import { ScoreData } from './types.js';
 
 export function parseConnections(rawText: string): ScoreData | null {
   try {
@@ -58,11 +58,16 @@ export function parseConnections(rawText: string): ScoreData | null {
       }
     }
     
+    const displayScore = mistakes === 0 ? 'Perfect!' : `${mistakes} mistake${mistakes !== 1 ? 's' : ''}`;
+    
     return {
       gameType: 'connections',
       puzzleNumber,
       mistakes,
       gameDate,
+      // Standardized fields for ranking and display
+      displayScore,
+      sortScore: -mistakes, // Negative so lower mistakes (better) sort first when ascending
     };
   } catch (error) {
     return null;

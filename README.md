@@ -9,7 +9,7 @@ A social score-sharing platform where users paste game results (Wordle, Connecti
 - **Database**: Azure Cosmos DB (with local emulator support)
 - **Deployment**: Azure App Service
 - **Monitoring**: Azure Application Insights
-- **Authentication**: Google OAuth, Facebook OAuth, Microsoft/Entra ID OAuth
+- **Authentication**: Google OAuth, Microsoft/Entra ID OAuth
 
 ## Project Structure
 
@@ -29,7 +29,7 @@ scorepaster/
 │   │   ├── oauth/       # OAuth handlers
 │   │   ├── parsers/     # Game score parsers
 │   │   ├── database/    # Cosmos DB client and models
-│   │   └── utils/       # Utilities (JWT, App Insights)
+│   │   └── utils/       # Utilities (JWT, App Insights, score ranking)
 │   └── package.json
 └── package.json         # Root package.json with scripts
 ```
@@ -42,7 +42,6 @@ scorepaster/
 - Azure Cosmos DB Emulator (for local development) OR Azure Cosmos DB account
 - OAuth app registrations:
   - Google OAuth 2.0 Client ID
-  - Facebook App ID
   - Microsoft/Entra ID App Registration
 
 ### Local Cosmos DB Emulator Setup
@@ -94,11 +93,6 @@ GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
 
-# Facebook OAuth
-FACEBOOK_APP_ID=your-facebook-app-id
-FACEBOOK_APP_SECRET=your-facebook-app-secret
-FACEBOOK_REDIRECT_URI=http://localhost:3000/api/auth/facebook/callback
-
 # Microsoft/Entra ID OAuth
 MICROSOFT_CLIENT_ID=your-microsoft-client-id
 MICROSOFT_CLIENT_SECRET=your-microsoft-client-secret
@@ -147,7 +141,6 @@ Starts the Express server which serves both the React app and API.
 
 ### Authentication
 - `GET /api/auth/google` - Initiate Google OAuth
-- `GET /api/auth/facebook` - Initiate Facebook OAuth
 - `GET /api/auth/microsoft` - Initiate Microsoft OAuth
 - `GET /api/auth/{provider}/callback` - OAuth callback
 - `GET /api/auth/me` - Get current user (requires auth)
@@ -178,6 +171,44 @@ The system automatically detects game type by trying parsers in order:
 To add a new game parser:
 1. Create parser in `server/src/parsers/` and `client/src/utils/parsers/`
 2. Register in `server/src/parsers/index.ts` and `client/src/utils/parsers/index.ts`
+
+### Scoring System
+
+All scores have two standardized fields:
+
+1. **`displayScore`** (string): Human-readable score display
+   - Wordle: `"4/6"`
+   - Connections: `"Perfect!"` or `"2 mistakes"`
+   - Score-based games: `"1,234"`
+
+2. **`sortScore`** (number): Numeric value for sorting (always ascending)
+   - **Lower is better** games: Use negative values (e.g., `-4` for 4 guesses)
+   - **Higher is better** games: Use positive values (e.g., `1234` for score)
+   - Always sort ascending, so `-4` (better) comes before `-3` (worse)
+
+**Example parsers:**
+
+Lower is better (Wordle):
+```typescript
+return {
+  gameType: 'wordle',
+  guesses: 4,
+  maxGuesses: 6,
+  displayScore: '4/6',
+  sortScore: -4, // Negative so better scores sort first
+};
+```
+
+Higher is better (score-based):
+```typescript
+return {
+  gameType: 'mygame',
+  displayScore: '1,234',
+  sortScore: 1234, // Positive, higher values sort first
+};
+```
+
+The ranking system (`server/src/utils/scoreRanking.ts`) sorts by `sortScore` ascending, handling both types automatically.
 
 ## Architecture: Board-First Design
 

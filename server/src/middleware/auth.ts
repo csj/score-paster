@@ -12,7 +12,7 @@ declare global {
         email: string;
         displayName: string;
         avatarUrl?: string;
-        provider: 'google' | 'facebook' | 'microsoft';
+        provider: 'google' | 'microsoft';
         roles?: string[];
       };
       tokenClaims?: TokenClaims;

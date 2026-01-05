@@ -1,3 +1,6 @@
+// Load environment variables from .env file (must be first!)
+import 'dotenv/config';
+
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -25,7 +28,9 @@ app.use('/api/scores', scoresRoutes);
 app.use('/api/scoreboards', scoreboardsRoutes);
 
 // Serve static files from Vite build
-const staticPath = path.join(__dirname, 'client', 'dist');
+// __dirname is server/dist in production, server/src in dev (with tsx)
+// Go up to server/ directory, then to client/dist
+const staticPath = path.join(__dirname, '..', 'client', 'dist');
 app.use(express.static(staticPath));
 
 // React Router catch-all: serve index.html for all non-API routes
@@ -34,7 +39,13 @@ app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'Not found' });
   }
-  res.sendFile(path.join(staticPath, 'index.html'));
+  const indexPath = path.join(staticPath, 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error serving index.html:', err);
+      res.status(404).send('Frontend not built. Run "npm run build" first.');
+    }
+  });
 });
 
 const port = process.env.PORT || 3000;

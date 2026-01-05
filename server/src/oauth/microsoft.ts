@@ -6,20 +6,28 @@ const clientSecret = process.env.MICROSOFT_CLIENT_SECRET || '';
 const tenantId = process.env.MICROSOFT_TENANT_ID || 'common';
 const redirectUri = process.env.MICROSOFT_REDIRECT_URI || 'http://localhost:3000/api/auth/microsoft/callback';
 
-export function getMicrosoftAuthUrl(): string {
+export function getMicrosoftAuthUrl(state?: string): string {
+  if (!clientId) {
+    throw new Error('MICROSOFT_CLIENT_ID is not configured. Please set it in server/.env file. See LOCAL_DEVELOPMENT.md for setup instructions.');
+  }
+  
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: 'code',
     redirect_uri: redirectUri,
     response_mode: 'query',
-    scope: 'openid profile email User.Read',
-    state: 'microsoft-auth-state', // In production, use a secure random value
+    scope: 'openid profile email',
+    state: state || 'microsoft-auth-state', // Pass frontend URL through OAuth flow
   });
   
   return `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?${params.toString()}`;
 }
 
 export async function handleMicrosoftCallback(code: string): Promise<{ token: string; user: any; roles?: string[] }> {
+  if (!clientId || !clientSecret) {
+    throw new Error('Microsoft OAuth credentials are not configured. Please set MICROSOFT_CLIENT_ID and MICROSOFT_CLIENT_SECRET in server/.env file.');
+  }
+  
   try {
     // Exchange code for tokens
     const tokenResponse = await fetch(
@@ -33,7 +41,7 @@ export async function handleMicrosoftCallback(code: string): Promise<{ token: st
           code,
           redirect_uri: redirectUri,
           grant_type: 'authorization_code',
-          scope: 'openid profile email User.Read',
+          scope: 'openid profile email',
         }),
       }
     );
@@ -45,7 +53,6 @@ export async function handleMicrosoftCallback(code: string): Promise<{ token: st
     
     const tokenData = await tokenResponse.json();
     const idToken = tokenData.id_token;
-    const accessToken = tokenData.access_token;
     
     if (!idToken) {
       throw new Error('No ID token received from Microsoft');
@@ -54,26 +61,13 @@ export async function handleMicrosoftCallback(code: string): Promise<{ token: st
     // Decode the ID token (we'll validate it properly in the JWT middleware)
     const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
     
-    // Extract user information
+    // Extract user information from ID token
     const providerUserId = payload.sub;
     const email = payload.email || payload.preferred_username || '';
     const displayName = payload.name || '';
     const roles = payload.roles || [];
-    
-    // Get user profile picture from Microsoft Graph
-    let avatarUrl: string | undefined;
-    try {
-      const graphResponse = await fetch('https://graph.microsoft.com/v1.0/me/photo/$value', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      
-      if (graphResponse.ok) {
-        // In a real implementation, you might want to store this or convert to a URL
-        // For now, we'll skip it
-      }
-    } catch (error) {
-      // Photo fetch is optional, continue without it
-    }
+    // Note: Avatar URL not available with basic OpenID Connect scopes (would require User.Read)
+    const avatarUrl: string | undefined = undefined;
     
     // Create or update user in database
     const user = await createOrUpdateUser(

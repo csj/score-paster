@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../middleware/auth.js';
-import { tryParseScore } from '../parsers/index.js';
 import { getScoresContainer } from '../database/cosmos.js';
 import { Score } from '../database/models.js';
 import { trackEvent, trackMetric, logInfo, logError } from '../utils/appinsights.js';
@@ -13,39 +12,41 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
     
-    const { rawPaste } = req.body;
+    const { rawPaste, gameType, gameDate, scoreData } = req.body;
     
-    if (!rawPaste || typeof rawPaste !== 'string') {
-      return res.status(400).json({ error: 'rawPaste is required' });
+    // Validate required fields (client should have parsed these)
+    if (!gameType || typeof gameType !== 'string') {
+      return res.status(400).json({ error: 'gameType is required' });
     }
     
-    // Try to parse the score with all parsers
-    const parseResult = tryParseScore(rawPaste);
-    
-    if (!parseResult) {
-      // Phase 1: Return error if unrecognized
-      // Phase 2: Will store in UnrecognizedPastes
-      trackMetric('score_parse_failed', 1);
-      logInfo('Score parse failed', { userId: req.user.id, rawPasteLength: rawPaste.length });
-      return res.status(400).json({
-        success: false,
-        error: 'Could not recognize score format. Please check your paste and try again.',
-      });
+    if (!gameDate || typeof gameDate !== 'string') {
+      return res.status(400).json({ error: 'gameDate is required' });
     }
     
-    const { gameType, scoreData } = parseResult;
+    if (!scoreData || typeof scoreData !== 'object') {
+      return res.status(400).json({ error: 'scoreData is required' });
+    }
+    
+    // Validate scoreData has required fields
+    if (typeof scoreData.displayScore !== 'string') {
+      return res.status(400).json({ error: 'scoreData.displayScore is required' });
+    }
+    
+    if (typeof scoreData.sortScore !== 'number') {
+      return res.status(400).json({ error: 'scoreData.sortScore is required' });
+    }
     
     // Store score in Cosmos DB
     const container = await getScoresContainer();
     const now = new Date().toISOString();
     
     const score: Score = {
-      id: `${req.user.id}:${gameType}:${scoreData.gameDate}:${Date.now()}`,
+      id: `${req.user.id}:${gameType}:${gameDate}:${Date.now()}`,
       userId: req.user.id,
       gameType,
-      gameDate: scoreData.gameDate as string,
-      scoreData,
-      rawPaste,
+      gameDate,
+      scoreData, // Already enriched with displayScore, sortScore, and game-specific fields
+      rawPaste: rawPaste || '', // Optional, for reference/debugging
       createdAt: now,
     };
     

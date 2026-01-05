@@ -30,7 +30,7 @@ export default function PasteInput() {
     }
 
     if (!parseResult) {
-      setError('Could not recognize score format');
+      setError('Could not recognize score format. Please check your paste and try again.');
       return;
     }
 
@@ -39,9 +39,15 @@ export default function PasteInput() {
     setSuccess(false);
 
     try {
+      // Submit enriched payload with parsed data
       await apiRequest('/api/scores', {
         method: 'POST',
-        body: JSON.stringify({ rawPaste }),
+        body: JSON.stringify({
+          rawPaste, // Keep for reference/debugging
+          gameType: parseResult.gameType,
+          gameDate: parseResult.scoreData.gameDate,
+          scoreData: parseResult.scoreData, // Includes displayScore, sortScore, and game-specific fields
+        }),
       });
       
       setSuccess(true);
@@ -77,7 +83,7 @@ export default function PasteInput() {
         }}
       />
 
-      {parseResult && (
+      {parseResult ? (
         <div style={{
           marginTop: '1rem',
           padding: '1rem',
@@ -86,9 +92,23 @@ export default function PasteInput() {
         }}>
           <strong>Detected:</strong> {parseResult.gameType}
           <br />
-          <small>{JSON.stringify(parseResult.scoreData, null, 2)}</small>
+          <strong>Score:</strong> {parseResult.scoreData.displayScore}
+          <br />
+          <small style={{ fontSize: '0.875rem', color: '#666' }}>
+            {parseResult.scoreData.gameDate}
+          </small>
         </div>
-      )}
+      ) : rawPaste.trim() ? (
+        <div style={{
+          marginTop: '1rem',
+          padding: '1rem',
+          backgroundColor: '#ffebee',
+          color: '#c62828',
+          borderRadius: '4px',
+        }}>
+          <strong>Format not recognized</strong> - Please check your paste and try again.
+        </div>
+      ) : null}
 
       {error && (
         <div style={{

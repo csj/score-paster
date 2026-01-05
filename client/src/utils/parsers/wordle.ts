@@ -1,11 +1,4 @@
-export interface ScoreData {
-  gameType: string;
-  gameNumber?: number;
-  guesses: number;
-  maxGuesses: number;
-  gameDate: string;
-  [key: string]: unknown;
-}
+import { ScoreData } from './types';
 
 export function parseWordle(rawText: string): ScoreData | null {
   try {
@@ -23,13 +16,15 @@ export function parseWordle(rawText: string): ScoreData | null {
       return null;
     }
     
-    const match = wordleLine.match(/Wordle\s+(\d+)\s+(\d+)\/(\d+)/i);
+    // Match game number with optional commas (e.g., "1,661" or "1661")
+    const match = wordleLine.match(/Wordle\s+([\d,]+)\s+(\d+)\/(\d+)/i);
     
     if (!match) {
       return null;
     }
     
-    const gameNumber = parseInt(match[1], 10);
+    // Remove commas from game number before parsing
+    const gameNumber = parseInt(match[1].replace(/,/g, ''), 10);
     const guesses = parseInt(match[2], 10);
     const maxGuesses = parseInt(match[3], 10);
     
@@ -61,6 +56,9 @@ export function parseWordle(rawText: string): ScoreData | null {
       guesses,
       maxGuesses,
       gameDate,
+      // Standardized fields for ranking and display
+      displayScore: `${guesses}/${maxGuesses}`,
+      sortScore: -guesses, // Negative so lower guesses (better) sort first when ascending
     };
   } catch (error) {
     return null;

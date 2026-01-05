@@ -8,16 +8,26 @@ const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/ap
 
 export const googleOAuthClient = new OAuth2Client(clientId, clientSecret, redirectUri);
 
-export function getGoogleAuthUrl(): string {
+export function getGoogleAuthUrl(state?: string): string {
+  if (!clientId) {
+    throw new Error('GOOGLE_CLIENT_ID is not configured. Please set it in server/.env file. See LOCAL_DEVELOPMENT.md for setup instructions.');
+  }
+  
   const scopes = ['profile', 'email'];
   return googleOAuthClient.generateAuthUrl({
     access_type: 'offline',
     scope: scopes,
-    prompt: 'consent',
+    // Only prompt for consent if needed (not every time)
+    prompt: 'select_account',
+    state: state || undefined, // Pass frontend URL through OAuth flow
   });
 }
 
 export async function handleGoogleCallback(code: string): Promise<{ token: string; user: any }> {
+  if (!clientId || !clientSecret) {
+    throw new Error('Google OAuth credentials are not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in server/.env file.');
+  }
+  
   try {
     // Exchange code for tokens
     const { tokens } = await googleOAuthClient.getToken(code);

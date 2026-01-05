@@ -5,7 +5,7 @@ interface User {
   email: string;
   displayName: string;
   avatarUrl?: string;
-  provider: 'google' | 'facebook' | 'microsoft';
+  provider: 'google' | 'microsoft';
 }
 
 interface AuthContextType {
@@ -59,16 +59,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           // Token invalid, clear it
           localStorage.removeItem('auth_token');
+          setUser(null);
         }
       } catch (error) {
         console.error('Auth check failed:', error);
         localStorage.removeItem('auth_token');
+        setUser(null);
       } finally {
         setLoading(false);
       }
     };
 
     checkAuth();
+
+    // Listen for token invalid events from API client
+    const handleTokenInvalid = () => {
+      setUser(null);
+    };
+    window.addEventListener('auth:token-invalid', handleTokenInvalid);
+
+    return () => {
+      window.removeEventListener('auth:token-invalid', handleTokenInvalid);
+    };
   }, []);
 
   const login = () => {

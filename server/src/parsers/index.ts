@@ -1,5 +1,6 @@
-import { parseWordle, ScoreData } from './wordle.js';
+import { parseWordle } from './wordle.js';
 import { parseConnections } from './connections.js';
+import type { ScoreData } from './types.js';
 
 export type Parser = (rawText: string) => ScoreData | null;
 
@@ -27,4 +28,4 @@ export function tryParseScore(rawText: string): { gameType: string; scoreData: S
   return null;
 }
 
-export { ScoreData };
+export type { ScoreData };

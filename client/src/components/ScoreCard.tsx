@@ -17,12 +17,12 @@ interface ScoreCardProps {
 
 export default function ScoreCard({ score, rank, user }: ScoreCardProps) {
   const formatScore = () => {
-    if (score.gameType === 'wordle') {
-      return `${score.scoreData.guesses}/${score.scoreData.maxGuesses}`;
-    } else if (score.gameType === 'connections') {
-      const mistakes = score.scoreData.mistakes || 0;
-      return mistakes === 0 ? 'Perfect!' : `${mistakes} mistake${mistakes !== 1 ? 's' : ''}`;
+    // Use displayScore if available
+    if (score.scoreData.displayScore) {
+      return score.scoreData.displayScore;
     }
+    
+    // Fallback for legacy scores (shouldn't happen with new parsers)
     return JSON.stringify(score.scoreData);
   };
 

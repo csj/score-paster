@@ -166,11 +166,15 @@ export async function getScoreboardScores(
   
   if (memberIds === null) {
     // Global scoreboard - get all scores for this game type
-    query = 'SELECT * FROM c WHERE c.gameType = @gameType ORDER BY c.gameDate DESC, c.createdAt DESC';
+    // Note: No ORDER BY in query - Cosmos DB requires composite index for multi-field ORDER BY
+    // We'll sort in memory using compareScores() which handles gameDate and sortScore
+    query = 'SELECT * FROM c WHERE c.gameType = @gameType';
     parameters = [{ name: '@gameType', value: gameType }];
   } else {
     // Private scoreboard - get scores for members only
-    query = 'SELECT * FROM c WHERE c.gameType = @gameType AND ARRAY_CONTAINS(@memberIds, c.userId) ORDER BY c.gameDate DESC, c.createdAt DESC';
+    // Note: No ORDER BY in query - Cosmos DB requires composite index for multi-field ORDER BY
+    // We'll sort in memory using compareScores() which handles gameDate and sortScore
+    query = 'SELECT * FROM c WHERE c.gameType = @gameType AND ARRAY_CONTAINS(@memberIds, c.userId)';
     parameters = [
       { name: '@gameType', value: gameType },
       { name: '@memberIds', value: memberIds },

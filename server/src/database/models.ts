@@ -1,4 +1,4 @@
-export type Provider = 'google' | 'facebook' | 'microsoft';
+export type Provider = 'google' | 'microsoft';
 
 export interface User {
   id: string; // Composite: {provider}:{providerUserId}

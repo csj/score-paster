@@ -1,66 +1,105 @@
 import { Router, Request, Response } from 'express';
 import { getGoogleAuthUrl, handleGoogleCallback } from '../oauth/google.js';
-import { getFacebookAuthUrl, handleFacebookCallback } from '../oauth/facebook.js';
 import { getMicrosoftAuthUrl, handleMicrosoftCallback } from '../oauth/microsoft.js';
 import { authenticate } from '../middleware/auth.js';
 import { logError } from '../utils/appinsights.js';
 
 const router = Router();
 
+// Get frontend URL from request (Origin, Referer, or fallback)
+function getFrontendUrlFromRequest(req: Request): string | null {
+  // Check Origin header first (most reliable)
+  const origin = req.get('origin');
+  if (origin) {
+    return origin;
+  }
+  
+  // Check Referer header
+  const referer = req.get('referer');
+  if (referer) {
+    try {
+      const url = new URL(referer);
+      return `${url.protocol}//${url.host}`;
+    } catch {
+      // Invalid referer, ignore
+    }
+  }
+  
+  return null;
+}
+
 // Initiate OAuth flows
 router.get('/google', (req: Request, res: Response) => {
-  const authUrl = getGoogleAuthUrl();
-  res.redirect(authUrl);
-});
-
-router.get('/facebook', (req: Request, res: Response) => {
-  const authUrl = getFacebookAuthUrl();
+  // Capture frontend URL and pass it via state parameter
+  const frontendUrl = getFrontendUrlFromRequest(req);
+  const state = frontendUrl ? encodeURIComponent(frontendUrl) : '';
+  const authUrl = getGoogleAuthUrl(state);
   res.redirect(authUrl);
 });
 
 router.get('/microsoft', (req: Request, res: Response) => {
-  const authUrl = getMicrosoftAuthUrl();
+  // Capture frontend URL and pass it via state parameter
+  const frontendUrl = getFrontendUrlFromRequest(req);
+  const state = frontendUrl ? encodeURIComponent(frontendUrl) : '';
+  const authUrl = getMicrosoftAuthUrl(state);
   res.redirect(authUrl);
 });
+
+// Get frontend URL from state or request
+function getFrontendUrl(req: Request, state?: string): string {
+  // First, try to get from state parameter (passed through OAuth flow)
+  if (state) {
+    try {
+      return decodeURIComponent(state);
+    } catch {
+      // Invalid state, continue
+    }
+  }
+  
+  // Fall back to request headers
+  const fromRequest = getFrontendUrlFromRequest(req);
+  if (fromRequest) {
+    return fromRequest;
+  }
+  
+  // Last resort: use environment variable or default
+  if (process.env.FRONTEND_URL) {
+    return process.env.FRONTEND_URL;
+  }
+  
+  // In production, use same origin as request
+  if (process.env.NODE_ENV === 'production') {
+    const protocol = req.get('x-forwarded-proto') || (req.secure ? 'https' : 'http');
+    const host = req.get('host') || 'localhost:3000';
+    return `${protocol}://${host}`;
+  }
+  
+  // Development fallback (shouldn't reach here if Origin/Referer are set)
+  return 'http://localhost:5173';
+}
 
 // OAuth callbacks
 router.get('/google/callback', async (req: Request, res: Response) => {
   try {
-    const { code } = req.query;
+    const { code, state } = req.query;
     if (!code || typeof code !== 'string') {
       return res.status(400).json({ error: 'Missing authorization code' });
     }
     
     const { token, user } = await handleGoogleCallback(code);
     
-    // In production, set token in HTTP-only cookie or return to frontend securely
-    // For now, redirect with token in query (not secure, but works for development)
-    res.redirect(`/?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`);
+    // Redirect to frontend with token (use state to get original frontend URL)
+    const frontendUrl = getFrontendUrl(req, typeof state === 'string' ? state : undefined);
+    res.redirect(`${frontendUrl}/?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`);
   } catch (error) {
     logError(error as Error, { provider: 'google' });
     res.status(500).json({ error: 'Authentication failed' });
   }
 });
 
-router.get('/facebook/callback', async (req: Request, res: Response) => {
-  try {
-    const { code } = req.query;
-    if (!code || typeof code !== 'string') {
-      return res.status(400).json({ error: 'Missing authorization code' });
-    }
-    
-    const { token, user } = await handleFacebookCallback(code);
-    
-    res.redirect(`/?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`);
-  } catch (error) {
-    logError(error as Error, { provider: 'facebook' });
-    res.status(500).json({ error: 'Authentication failed' });
-  }
-});
-
 router.get('/microsoft/callback', async (req: Request, res: Response) => {
   try {
-    const { code } = req.query;
+    const { code, state } = req.query;
     if (!code || typeof code !== 'string') {
       return res.status(400).json({ error: 'Missing authorization code' });
     }
@@ -68,7 +107,9 @@ router.get('/microsoft/callback', async (req: Request, res: Response) => {
     const { token, user, roles } = await handleMicrosoftCallback(code);
     
     const userWithRoles = { ...user, roles };
-    res.redirect(`/?token=${token}&user=${encodeURIComponent(JSON.stringify(userWithRoles))}`);
+    // Redirect to frontend with token (use state to get original frontend URL)
+    const frontendUrl = getFrontendUrl(req, typeof state === 'string' ? state : undefined);
+    res.redirect(`${frontendUrl}/?token=${token}&user=${encodeURIComponent(JSON.stringify(userWithRoles))}`);
   } catch (error) {
     logError(error as Error, { provider: 'microsoft' });
     res.status(500).json({ error: 'Authentication failed' });

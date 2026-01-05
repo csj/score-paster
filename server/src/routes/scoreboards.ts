@@ -7,6 +7,7 @@ import {
   getUserScoreboards,
   getScoreboardScores,
 } from '../database/scoreboards.js';
+import { compareScores } from '../utils/scoreRanking.js';
 import { trackEvent, logInfo, logError } from '../utils/appinsights.js';
 
 const router = Router();
@@ -28,29 +29,9 @@ router.get('/:boardSlug/scores/:gameType', async (req: Request, res: Response) =
     const memberIds = scoreboard.isGlobal ? null : scoreboard.memberIds;
     const scores = await getScoreboardScores(scoreboard.id, gameType, memberIds);
     
-    // Rank scores by game date and score value
-    // For Wordle: lower guesses = better
-    // For Connections: lower mistakes = better
-    const rankedScores = scores.sort((a, b) => {
-      // First sort by game date (most recent first)
-      if (a.gameDate !== b.gameDate) {
-        return b.gameDate.localeCompare(a.gameDate);
-      }
-      
-      // Then sort by score (game-specific)
-      const aData = a.scoreData as any;
-      const bData = b.scoreData as any;
-      
-      if (a.gameType === 'wordle') {
-        // Lower guesses = better
-        return (aData.guesses || 999) - (bData.guesses || 999);
-      } else if (a.gameType === 'connections') {
-        // Lower mistakes = better
-        return (aData.mistakes || 999) - (bData.mistakes || 999);
-      }
-      
-      return 0;
-    });
+    // Rank scores using standardized comparison function
+    // Handles both "lower is better" (Wordle, Connections) and "higher is better" (score-based games)
+    const rankedScores = scores.sort(compareScores);
     
     res.json({
       scoreboard,

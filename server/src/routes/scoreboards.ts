@@ -28,7 +28,7 @@ router.get('/my-boards', authenticate, async (req: Request, res: Response) => {
 
     res.json(scoreboards);
   } catch (error) {
-    logError(error as Error, { userId: req.user?.id, endpoint: '/api/scoreboards/my-boards' });
+    logError(error as Error, { userId: req.user?.id || 'unknown', endpoint: '/api/scoreboards/my-boards' });
     res.status(500).json({ error: 'Failed to get user scoreboards' });
   }
 });
@@ -173,7 +173,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
     if (error.message?.includes('already exists')) {
       return res.status(409).json({ error: error.message });
     }
-    logError(error as Error, { userId: req.user?.id, endpoint: '/api/scoreboards' });
+        logError(error as Error, { userId: req.user?.id || 'unknown', endpoint: '/api/scoreboards' });
     res.status(500).json({ error: 'Failed to create scoreboard' });
   }
 });
@@ -212,7 +212,7 @@ router.get('/:slug/join', authenticate, async (req: Request, res: Response) => {
     
     res.json({ success: true, scoreboard });
   } catch (error) {
-    logError(error as Error, { userId: req.user?.id, endpoint: '/api/scoreboards/:slug/join' });
+        logError(error as Error, { userId: req.user?.id || 'unknown', endpoint: '/api/scoreboards/:slug/join' });
     res.status(500).json({ error: 'Failed to join scoreboard' });
   }
 });

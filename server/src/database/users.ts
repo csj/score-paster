@@ -1,4 +1,3 @@
-import { Container } from '@azure/cosmos';
 import { getUsersContainer } from './cosmos.js';
 import { User, Provider } from './models.js';
 
@@ -30,7 +29,7 @@ export async function createOrUpdateUser(
       };
       
       const { resource } = await container.items.upsert(updated);
-      return resource!;
+      return resource as unknown as User;
     }
   } catch (error: any) {
     // User doesn't exist, create new one
@@ -53,7 +52,7 @@ export async function createOrUpdateUser(
   };
   
   const { resource } = await container.items.create(newUser);
-  return resource!;
+  return resource as unknown as User;
 }
 
 export async function getUserById(userId: string): Promise<User | null> {
@@ -85,7 +84,7 @@ export async function updateUsername(userId: string, username: string): Promise<
   };
   
   const { resource } = await container.items.upsert(updated);
-  return resource!;
+  return resource as unknown as User;
 }
 
 export async function getUsersByIds(userIds: string[]): Promise<User[]> {

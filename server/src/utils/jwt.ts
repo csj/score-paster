@@ -16,10 +16,10 @@ export interface TokenClaims {
   [key: string]: unknown;
 }
 
-// Google JWKS client
-const googleClient = jwksClient({
-  jwksUri: 'https://www.googleapis.com/oauth2/v3/certs',
-});
+// Google JWKS client (unused but kept for potential future use)
+// const googleClient = jwksClient({
+//   jwksUri: 'https://www.googleapis.com/oauth2/v3/certs',
+// });
 
 // Microsoft/Entra ID JWKS client
 function getMicrosoftJwksClient(tenantId: string) {

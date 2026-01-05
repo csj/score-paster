@@ -1,4 +1,3 @@
-import { Container } from '@azure/cosmos';
 import { getScoreboardsContainer, getScoreboardMembersContainer } from './cosmos.js';
 import { Scoreboard, ScoreboardMember } from './models.js';
 import { getScoresContainer } from './cosmos.js';
@@ -155,7 +154,7 @@ export async function getUserScoreboards(userId: string): Promise<Scoreboard[]> 
 }
 
 export async function getScoreboardScores(
-  scoreboardId: string,
+  _scoreboardId: string, // Unused but kept for API consistency
   gameType: string,
   memberIds: string[] | null, // null means all users (global)
   gameDate?: string // Optional date filter (YYYY-MM-DD format)
@@ -163,7 +162,7 @@ export async function getScoreboardScores(
   const container = await getScoresContainer();
   
   let query: string;
-  let parameters: { name: string; value: unknown }[];
+  let parameters: { name: string; value: string | string[] }[];
   
   if (memberIds === null) {
     // Global scoreboard - get all scores for this game type
@@ -195,9 +194,12 @@ export async function getScoreboardScores(
     }
   }
   
-  const { resources } = await container.items.query({ query, parameters }).fetchAll();
+  const { resources } = await container.items.query({
+    query,
+    parameters: parameters as { name: string; value: string | string[] }[],
+  }).fetchAll();
   
-  return resources;
+  return resources as Score[];
 }
 
 function generateInviteCode(): string {

@@ -74,7 +74,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
       provider: req.user.provider,
     });
     trackMetric('score_submissions', 1);
-    logInfo('Score stored successfully', { userId: req.user.id, gameType, scoreId: resource?.id });
+    logInfo('Score stored successfully', { userId: req.user.id, gameType, scoreId: resource?.id || 'unknown' });
     
     res.json({
       success: true,
@@ -83,7 +83,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
       scoreId: resource?.id,
     });
   } catch (error) {
-    logError(error as Error, { userId: req.user?.id, endpoint: '/api/scores' });
+    logError(error as Error, { userId: req.user?.id || 'unknown', endpoint: '/api/scores' });
     res.status(500).json({ error: 'Failed to store score' });
   }
 });

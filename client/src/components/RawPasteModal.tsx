@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface RawPasteModalProps {
   isOpen: boolean;
   onClose: () => void;

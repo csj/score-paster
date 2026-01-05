@@ -116,7 +116,7 @@ router.get('/microsoft/callback', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/logout', (req: Request, res: Response) => {
+router.post('/logout', (_req: Request, res: Response) => {
   // In production, invalidate token server-side
   res.json({ message: 'Logged out successfully' });
 });
@@ -152,7 +152,7 @@ router.patch('/me/username', authenticate, async (req: Request, res: Response) =
     
     res.json(updatedUser);
   } catch (error) {
-    logError(error as Error, { userId: req.user?.id, endpoint: '/api/auth/me/username' });
+    logError(error as Error, { userId: req.user?.id || 'unknown', endpoint: '/api/auth/me/username' });
     res.status(500).json({ error: 'Failed to update username' });
   }
 });

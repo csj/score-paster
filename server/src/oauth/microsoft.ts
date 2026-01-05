@@ -51,7 +51,7 @@ export async function handleMicrosoftCallback(code: string): Promise<{ token: st
       throw new Error(`Failed to exchange code for token: ${errorText}`);
     }
     
-    const tokenData = await tokenResponse.json();
+    const tokenData = await tokenResponse.json() as { id_token?: string; access_token?: string };
     const idToken = tokenData.id_token;
     
     if (!idToken) {

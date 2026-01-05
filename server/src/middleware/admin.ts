@@ -13,7 +13,7 @@ export function requireAdmin(
   }
   
   if (!hasAdminRole(req.tokenClaims)) {
-    logWarning('Admin access denied', { userId: req.user?.id, endpoint: req.path });
+    logWarning('Admin access denied', { userId: req.user?.id || 'unknown', endpoint: req.path });
     res.status(403).json({ error: 'Admin role required' });
     return;
   }

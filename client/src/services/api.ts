@@ -1,5 +1,4 @@
 // Track if we're currently refreshing to avoid infinite loops
-let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
 
 // Decode JWT to check expiration (without verification)
@@ -85,9 +84,9 @@ export async function apiRequest<T>(
     throw new Error('Your session has expired. Please log in again.');
   }
   
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
   
   if (token) {
@@ -96,13 +95,11 @@ export async function apiRequest<T>(
   
   const response = await fetch(url, {
     ...options,
-    headers,
+    headers: headers as HeadersInit,
   });
 
   // Handle 401 Unauthorized - token might be invalid for other reasons
   if (response.status === 401 && retryCount === 0) {
-    const errorData = await response.json().catch(() => ({ error: 'Unauthorized' }));
-    
     // Check if token is still valid (maybe it was a transient error)
     const refreshed = await attemptTokenRefresh();
     

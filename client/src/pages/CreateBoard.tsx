@@ -31,7 +31,7 @@ export default function CreateBoard() {
     setSubmitting(true);
 
     try {
-      const scoreboard = await apiRequest('/api/scoreboards', {
+      await apiRequest('/api/scoreboards', {
         method: 'POST',
         body: JSON.stringify({ name, slug }),
       });

@@ -5,6 +5,7 @@ import GameLeaderboard from './pages/GameLeaderboard';
 import BoardView from './pages/BoardView';
 import MyBoards from './pages/MyBoards';
 import CreateBoard from './pages/CreateBoard';
+import GlobalLeaderboard from './pages/GlobalLeaderboard';
 import { AuthProvider } from './services/auth';
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/paste" element={<Paste />} />
+          <Route path="/leaderboard" element={<GlobalLeaderboard />} />
           <Route path="/boards/:boardSlug" element={<BoardView />} />
           <Route path="/boards/:boardSlug/scores/:gameType" element={<GameLeaderboard />} />
           <Route path="/my-boards" element={<MyBoards />} />

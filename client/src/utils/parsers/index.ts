@@ -1,12 +1,14 @@
 import type { ScoreData } from './types';
 import { parseWordle } from './wordle';
 import { parseConnections } from './connections';
+import { parseDigitParty } from './digitparty';
 
 export type Parser = (rawText: string) => ScoreData | null;
 
 const parsers: Parser[] = [
   parseWordle,
   parseConnections,
+  parseDigitParty,
 ];
 
 export function tryParseScore(rawText: string): { gameType: string; scoreData: ScoreData } | null {

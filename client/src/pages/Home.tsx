@@ -54,7 +54,7 @@ export default function Home() {
           My Scoreboards
         </Link>
         <Link
-          to="/boards/global/scores/wordle"
+          to="/leaderboard"
           style={{
             padding: '1rem',
             backgroundColor: '#388e3c',
@@ -63,19 +63,7 @@ export default function Home() {
             borderRadius: '4px',
           }}
         >
-          Global Wordle Leaderboard
-        </Link>
-        <Link
-          to="/boards/global/scores/connections"
-          style={{
-            padding: '1rem',
-            backgroundColor: '#7b1fa2',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '4px',
-          }}
-        >
-          Global Connections Leaderboard
+          Global Leaderboard
         </Link>
       </div>
     </div>

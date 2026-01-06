@@ -41,10 +41,10 @@ export function parseDigitParty(rawText: string): ScoreData | null {
     }
     
     // Calculate date from day number
-    // Digit Party day 1 was on April 3, 2023
-    // (Calculated: day 1008 on 2026-01-05 means day 1 = 2023-04-03)
+    // Digit Party day 1 was on April 4, 2023
+    // (Recalculated: day 1009 on 2026-01-06 means day 1 = 2023-04-04)
     // Use local date components to avoid timezone issues
-    const digitPartyOriginDate = new Date(2023, 3, 3); // Month is 0-indexed, so 3 = April
+    const digitPartyOriginDate = new Date(2023, 3, 4); // Month is 0-indexed, so 3 = April
     const gameDateObj = new Date(digitPartyOriginDate);
     gameDateObj.setDate(digitPartyOriginDate.getDate() + (day - 1));
     // Format as YYYY-MM-DD in local time

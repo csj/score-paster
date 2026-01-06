@@ -41,10 +41,15 @@ export function parseConnections(rawText: string): ScoreData | null {
     
     // Calculate date from puzzle number
     // Connections #1 was on June 12, 2023
-    const connectionsOriginDate = new Date('2023-06-12');
+    // Use local date components to avoid timezone issues
+    const connectionsOriginDate = new Date(2023, 5, 12); // Month is 0-indexed, so 5 = June
     const gameDateObj = new Date(connectionsOriginDate);
     gameDateObj.setDate(connectionsOriginDate.getDate() + (puzzleNumber - 1));
-    const gameDate = gameDateObj.toISOString().split('T')[0];
+    // Format as YYYY-MM-DD in local time
+    const year = gameDateObj.getFullYear();
+    const month = String(gameDateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(gameDateObj.getDate()).padStart(2, '0');
+    const gameDate = `${year}-${month}-${day}`;
     
     // Try to extract mistakes from text first
     let mistakes = 0;

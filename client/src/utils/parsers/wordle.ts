@@ -37,11 +37,17 @@ export function parseWordle(rawText: string): ScoreData | null {
     }
     
     // Calculate date from game number
-    // Wordle #1 was on June 19, 2021
-    const wordleOriginDate = new Date('2021-06-19');
+    // Wordle #1 was on June 19, 2021, but we need to account for the actual puzzle numbering
+    // Using June 20, 2021 as origin to align with current game numbers
+    // Use local date components to avoid timezone issues
+    const wordleOriginDate = new Date(2021, 5, 20); // Month is 0-indexed, so 5 = June
     const gameDateObj = new Date(wordleOriginDate);
     gameDateObj.setDate(wordleOriginDate.getDate() + (gameNumber - 1));
-    const gameDate = gameDateObj.toISOString().split('T')[0];
+    // Format as YYYY-MM-DD in local time
+    const year = gameDateObj.getFullYear();
+    const month = String(gameDateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(gameDateObj.getDate()).padStart(2, '0');
+    const gameDate = `${year}-${month}-${day}`;
     
     return {
       gameType: 'wordle',

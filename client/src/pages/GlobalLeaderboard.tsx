@@ -41,8 +41,17 @@ export default function GlobalLeaderboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  // Helper to get today's date in local timezone (not UTC)
+  const getTodayLocal = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Default to today's date and first game type
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayLocal();
   const [selectedDate, setSelectedDate] = useState(today);
   const [selectedGameType, setSelectedGameType] = useState(GAME_TYPES[0].value);
 
@@ -69,14 +78,16 @@ export default function GlobalLeaderboard() {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00');
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
+    const todayLocal = getTodayLocal();
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    const yesterday = new Date(todayDate);
     yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayLocal = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
     
-    if (dateStr === today.toISOString().split('T')[0]) {
+    if (dateStr === todayLocal) {
       return 'Today';
-    } else if (dateStr === yesterday.toISOString().split('T')[0]) {
+    } else if (dateStr === yesterdayLocal) {
       return 'Yesterday';
     } else {
       return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });

@@ -43,10 +43,15 @@ export function parseDigitParty(rawText: string): ScoreData | null {
     // Calculate date from day number
     // Digit Party day 1 was on April 3, 2023
     // (Calculated: day 1008 on 2026-01-05 means day 1 = 2023-04-03)
-    const digitPartyOriginDate = new Date('2023-04-03');
+    // Use local date components to avoid timezone issues
+    const digitPartyOriginDate = new Date(2023, 3, 3); // Month is 0-indexed, so 3 = April
     const gameDateObj = new Date(digitPartyOriginDate);
     gameDateObj.setDate(digitPartyOriginDate.getDate() + (day - 1));
-    const gameDate = gameDateObj.toISOString().split('T')[0];
+    // Format as YYYY-MM-DD in local time
+    const year = gameDateObj.getFullYear();
+    const month = String(gameDateObj.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(gameDateObj.getDate()).padStart(2, '0');
+    const gameDate = `${year}-${month}-${dayStr}`;
     
     return {
       gameType: 'digitparty',

@@ -66,37 +66,40 @@ export function parseConnections(rawText: string): ScoreData | null {
       // Find lines that look like grid rows (contain 4+ emoji blocks)
       for (const line of lines) {
         if (gridRowPattern.test(line)) {
-          // Extract just the emoji blocks from the line
-          const blocks = line.match(/[🟦🟨🟩🟪⬛]/g);
-          if (blocks && blocks.length >= 4) {
-            gridRows.push(blocks.slice(0, 4).join('')); // Take first 4 blocks
+          // Extract full emoji characters (each emoji is 2 code units)
+          // Match emoji pattern and group into full emojis
+          const emojiMatches = line.match(/[🟦🟨🟩🟪⬛]/g);
+          if (emojiMatches) {
+            // Group into full emojis (every 2 code units = 1 emoji)
+            const fullEmojis: string[] = [];
+            for (let i = 0; i < emojiMatches.length; i += 2) {
+              if (i + 1 < emojiMatches.length) {
+                fullEmojis.push(emojiMatches[i] + emojiMatches[i + 1]);
+              }
+            }
+            if (fullEmojis.length >= 4) {
+              gridRows.push(fullEmojis.slice(0, 4).join('')); // Take first 4 emojis
+            }
           }
         }
       }
       
-      // Count how many rows have all 4 blocks matching (perfect rows)
-      let perfectRows = 0;
+      // Count non-perfect rows (rows where not all 4 blocks match)
+      // Each non-perfect row represents a mistake
+      // Note: Each emoji is 2 code units, so a row with 4 emojis has length 8
       for (const row of gridRows) {
-        if (row.length === 4) {
-          const firstBlock = row[0];
-          if (row.split('').every(block => block === firstBlock)) {
-            perfectRows++;
+        // Extract individual emojis (each is 2 code units)
+        const emojis: string[] = [];
+        for (let i = 0; i < row.length; i += 2) {
+          emojis.push(row.slice(i, i + 2));
+        }
+        // Check if all emojis are the same
+        if (emojis.length === 4) {
+          const firstEmoji = emojis[0];
+          if (!emojis.every(emoji => emoji === firstEmoji)) {
+            mistakes++;
           }
         }
-      }
-      
-      // In Connections, you need 4 perfect rows for a perfect game
-      // If you have fewer than 4 perfect rows, you made mistakes
-      // The number of mistakes is typically: 4 - perfectRows
-      // But we need to be careful - if there are fewer than 4 rows total, 
-      // the user might not have completed the game
-      if (gridRows.length === 4) {
-        // Game completed - mistakes = 4 - perfectRows
-        mistakes = 4 - perfectRows;
-      } else if (gridRows.length > 0) {
-        // Partial game - assume mistakes based on incomplete rows
-        // This is a heuristic - we can't know exact mistakes from partial games
-        mistakes = Math.max(0, 4 - perfectRows);
       }
       // If no grid found, mistakes stays 0 (will show as "Perfect!" but user can correct)
     }
